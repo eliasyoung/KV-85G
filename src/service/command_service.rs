@@ -2,13 +2,28 @@ use crate::*;
 
 impl CommandService for Hget {
     fn execute(self, store: &impl Storage) -> CommandResponse {
-        match store.get(&self.table, &self.key) {
-            Ok(Some(v)) => v.into(),
-            Ok(None) => {
-                let e =KvError::NotFound(self.table, self.key).into();
-                e
-            }
-        }
+        // match store.get(&self.table, &self.key) {
+        //     Ok(Some(v)) => v.into(),
+        //     Ok(None) => KvError::NotFound(self.table, self.key).into(),
+        //     Err(e) => e.into(),
+        // }
+        todo!()
+    }
+}
+
+impl CommandService for Hgetall {
+    fn execute(self, store: &impl Storage) -> CommandResponse {
+        // match store.get_all(&self.table) {
+        //     Ok(v) => v.into(),
+        //     Err(e) => e.into(),
+        // }
+        todo!()
+    }
+}
+
+impl CommandService for Hset {
+    fn execute(self, store: &impl Storage) -> CommandResponse {
+        todo!()
     }
 }
 

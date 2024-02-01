@@ -1,6 +1,8 @@
 pub mod abi;
 
+use http::StatusCode;
 use abi::{command_request::RequestData, *};
+use crate::KvError;
 
 impl CommandRequest {
     // Create HSET Command
@@ -64,5 +66,47 @@ impl From<i64> for Value {
         Self {
             value: Some(value::Value::Integer(int)),
         }
+    }
+}
+
+// Trans Value to CommandResponse
+impl From<Value> for CommandResponse {
+    fn from(value: Value) -> Self {
+        Self {
+            status: StatusCode::OK.as_u16() as _,
+            values: vec![value],
+            ..Default::default()
+        }
+    }
+}
+
+// Trans Vec<Kvpair> to CommandResponse
+impl From<Vec<Kvpair>> for CommandResponse {
+    fn from(pair: Vec<Kvpair>) -> Self {
+        Self {
+            status: StatusCode::OK.as_u16() as _,
+            pairs: pair,
+            ..Default::default()
+        }
+    }
+}
+
+// Trans KvError to CommandResponse
+impl From<KvError> for CommandResponse {
+    fn from(err: KvError) -> Self {
+        let mut result = Self {
+            status: StatusCode::INTERNAL_SERVER_ERROR.as_u16() as _,
+            message: err.to_string(),
+            values: vec![],
+            pairs: vec![],
+        };
+
+        match err {
+            KvError::NotFound(_, _) => result.status = StatusCode::NOT_FOUND.as_u16() as _,
+            KvError::InvalidCommand(_) => result.status = StatusCode::BAD_REQUEST.as_u16() as _,
+            _ => {}
+        }
+
+        result
     }
 }

@@ -110,7 +110,7 @@ mod tests {
     }
 
     // Test where result will be error.
-    fn assert_res_error(mut res: CommandResponse, code: u32, msg: &str) {
+    fn assert_res_error(res: CommandResponse, code: u32, msg: &str) {
         assert_eq!(res.status, code);
         assert!(res.message.contains(msg));
         assert_eq!(res.values, &[]);

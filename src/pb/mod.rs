@@ -110,3 +110,9 @@ impl From<KvError> for CommandResponse {
         result
     }
 }
+
+impl From<(String, Value)> for Kvpair {
+    fn from(kvpair: (String, Value)) -> Self {
+        Kvpair::new(kvpair.0, kvpair.1)
+    }
+}

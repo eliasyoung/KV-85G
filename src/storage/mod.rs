@@ -18,6 +18,28 @@ pub trait Storage {
     fn get_iter(&self, table: &str) -> Result<Box<dyn Iterator<Item = Kvpair>>, KvError>;
 }
 
+pub struct StorageIter<T> {
+    data: T,
+}
+
+impl<T> StorageIter<T> {
+    pub fn new(data: T) -> Self {
+        Self { data }
+    }
+}
+
+impl<T> Iterator for StorageIter<T>
+where
+    T: Iterator,
+    T::Item: Into<Kvpair>
+{
+    type Item = Kvpair;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.data.next().map(|v| v.into())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -34,11 +56,11 @@ mod tests {
         test_get_all(store);
     }
 
-    // #[test]
-    // fn memtable_iter_should_work() {
-    //     let store = MemTable::new();
-    //     test_get_iter(store);
-    // }
+    #[test]
+    fn memtable_iter_should_work() {
+        let store = MemTable::new();
+        test_get_iter(store);
+    }
 
     fn test_basic_interface(store: impl Storage) {
         // Call set() first time will create table {{t1}}, insert the key and return None since there is no value before.

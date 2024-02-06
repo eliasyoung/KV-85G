@@ -1,3 +1,4 @@
+use sled::Error;
 use crate::Value;
 use thiserror::Error;
 
@@ -17,7 +18,15 @@ pub enum KvError {
     EncodeError(#[from] prost::EncodeError),
     #[error("Failed to decode protobuf message")]
     DecodeError(#[from] prost::DecodeError),
+    #[error("Failed to access sled db")]
+    SledError(#[from] sled::Error),
 
     #[error("Internal error: {0}")]
     Internal(String),
 }
+
+// impl From<sled::Error> for KvError {
+//     fn from(_: sled::Error) -> Self {
+//         Self::Internal(String::from("error with sleddb"))
+//     }
+// }

@@ -1,8 +1,9 @@
 pub mod abi;
 
-use http::StatusCode;
-use abi::{command_request::RequestData, *};
 use crate::KvError;
+use abi::{command_request::RequestData, *};
+use http::StatusCode;
+use prost::Message;
 
 impl CommandRequest {
     // Create HSET Command
@@ -66,6 +67,24 @@ impl From<i64> for Value {
         Self {
             value: Some(value::Value::Integer(int)),
         }
+    }
+}
+
+impl TryFrom<&[u8]> for Value {
+    type Error = KvError;
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        let msg = Value::decode(value)?;
+        Ok(msg)
+    }
+}
+
+impl TryFrom<Value> for Vec<u8> {
+    type Error = KvError;
+
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        let mut buf = Vec::with_capacity(value.encoded_len());
+        value.encode(&mut buf)?;
+        Ok(buf)
     }
 }
 

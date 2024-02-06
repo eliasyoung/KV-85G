@@ -1,4 +1,4 @@
-// implementation for sled db
+// implementation of using sleddb
 
 use sled::{Db, Error, IVec};
 use std::{convert::TryInto, path::Path, str};

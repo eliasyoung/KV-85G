@@ -1,9 +1,11 @@
 mod memory;
 mod sleddb;
+mod rocks;
 
 use crate::{KvError, Kvpair, Value};
 pub use memory::MemTable;
 pub use sleddb::SledDb;
+pub use rocks::RocksDB;
 
 pub trait Storage {
     /// 从一个 HashTable 里获取一个 key 的 value

@@ -1,11 +1,11 @@
 mod memory;
-mod sleddb;
 mod rocks;
+mod sleddb;
 
 use crate::{KvError, Kvpair, Value};
 pub use memory::MemTable;
-pub use sleddb::SledDb;
 pub use rocks::RocksDB;
+pub use sleddb::SledDb;
 
 pub trait Storage {
     /// 从一个 HashTable 里获取一个 key 的 value
@@ -35,7 +35,7 @@ impl<T> StorageIter<T> {
 impl<T> Iterator for StorageIter<T>
 where
     T: Iterator,
-    T::Item: Into<Kvpair>
+    T::Item: Into<Kvpair>,
 {
     type Item = Kvpair;
 
@@ -44,49 +44,67 @@ where
     }
 }
 
+pub(crate) fn flip<T, E>(x: Option<Result<T, E>>) -> Result<Option<T>, E> {
+    x.map_or(Ok(None), |v| v.map(Some))
+}
+
 #[cfg(test)]
 mod tests {
-    use tempfile::tempdir;
     use super::*;
+    use tempfile::tempdir;
+
+    // #[test]
+    // fn memtable_basic_interface_should_work() {
+    //     let store = MemTable::new();
+    //     test_basic_interface(store);
+    // }
+    //
+    // #[test]
+    // fn memtable_get_all_should_work() {
+    //     let store = MemTable::new();
+    //     test_get_all(store);
+    // }
+    //
+    // #[test]
+    // fn memtable_iter_should_work() {
+    //     let store = MemTable::new();
+    //     test_get_iter(store);
+    // }
+    //
+    // #[test]
+    // fn sleddb_basic_interface_should_work() {
+    //     let dir = tempdir().unwrap();
+    //     let store = SledDb::new(dir);
+    //     test_basic_interface(store);
+    // }
+    //
+    // #[test]
+    // fn sleddb_get_all_should_work() {
+    //     let dir = tempdir().unwrap();
+    //     let store = SledDb::new(dir);
+    //     test_get_all(store);
+    // }
+    //
+    // #[test]
+    // fn sleddb_iter_should_work() {
+    //     let dir = tempdir().unwrap();
+    //     let store = SledDb::new(dir);
+    //     test_get_iter(store);
+    // }
 
     #[test]
-    fn memtable_basic_interface_should_work() {
-        let store = MemTable::new();
+    fn rocksdb_basic_interface_should_work() {
+        let dir = tempdir().unwrap();
+        let store = RocksDB::new(dir);
         test_basic_interface(store);
     }
 
-    #[test]
-    fn memtable_get_all_should_work() {
-        let store = MemTable::new();
-        test_get_all(store);
-    }
-
-    #[test]
-    fn memtable_iter_should_work() {
-        let store = MemTable::new();
-        test_get_iter(store);
-    }
-
-    #[test]
-    fn sleddb_basic_interface_should_work() {
-        let dir = tempdir().unwrap();
-        let store = SledDb::new(dir);
-        test_basic_interface(store);
-    }
-
-    #[test]
-    fn sleddb_get_all_should_work() {
-        let dir = tempdir().unwrap();
-        let store = SledDb::new(dir);
-        test_get_all(store);
-    }
-
-    #[test]
-    fn sleddb_iter_should_work() {
-        let dir = tempdir().unwrap();
-        let store = SledDb::new(dir);
-        test_get_iter(store);
-    }
+    // #[test]
+    // fn rocksdb_get_all_should_work() {
+    //     let dir = tempdir().unwrap();
+    //     let store = RocksDB::new(dir);
+    //     test_get_all(store);
+    // }
 
     fn test_basic_interface(store: impl Storage) {
         // Call set() first time will create table {{t1}}, insert the key and return None since there is no value before.

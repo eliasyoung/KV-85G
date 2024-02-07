@@ -3,7 +3,7 @@
 use sled::{Db, Error, IVec};
 use std::{convert::TryInto, path::Path, str};
 
-use crate::{KvError, Kvpair, Storage, StorageIter, Value};
+use crate::{KvError, Kvpair, Storage, StorageIter, Value, flip};
 
 #[derive(Debug)]
 pub struct SledDb(Db);
@@ -20,10 +20,6 @@ impl SledDb {
     fn get_table_prefix(table: &str) -> String {
         format!("{}:", table)
     }
-}
-
-fn flip<T, E>(x: Option<Result<T, E>>) -> Result<Option<T>, E> {
-    x.map_or(Ok(None), |v| v.map(Some))
 }
 
 impl Storage for SledDb {

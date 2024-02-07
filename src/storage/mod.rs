@@ -53,44 +53,44 @@ mod tests {
     use super::*;
     use tempfile::tempdir;
 
-    // #[test]
-    // fn memtable_basic_interface_should_work() {
-    //     let store = MemTable::new();
-    //     test_basic_interface(store);
-    // }
-    //
-    // #[test]
-    // fn memtable_get_all_should_work() {
-    //     let store = MemTable::new();
-    //     test_get_all(store);
-    // }
-    //
-    // #[test]
-    // fn memtable_iter_should_work() {
-    //     let store = MemTable::new();
-    //     test_get_iter(store);
-    // }
-    //
-    // #[test]
-    // fn sleddb_basic_interface_should_work() {
-    //     let dir = tempdir().unwrap();
-    //     let store = SledDb::new(dir);
-    //     test_basic_interface(store);
-    // }
-    //
-    // #[test]
-    // fn sleddb_get_all_should_work() {
-    //     let dir = tempdir().unwrap();
-    //     let store = SledDb::new(dir);
-    //     test_get_all(store);
-    // }
-    //
-    // #[test]
-    // fn sleddb_iter_should_work() {
-    //     let dir = tempdir().unwrap();
-    //     let store = SledDb::new(dir);
-    //     test_get_iter(store);
-    // }
+    #[test]
+    fn memtable_basic_interface_should_work() {
+        let store = MemTable::new();
+        test_basic_interface(store);
+    }
+
+    #[test]
+    fn memtable_get_all_should_work() {
+        let store = MemTable::new();
+        test_get_all(store);
+    }
+
+    #[test]
+    fn memtable_iter_should_work() {
+        let store = MemTable::new();
+        test_get_iter(store);
+    }
+
+    #[test]
+    fn sleddb_basic_interface_should_work() {
+        let dir = tempdir().unwrap();
+        let store = SledDb::new(dir);
+        test_basic_interface(store);
+    }
+
+    #[test]
+    fn sleddb_get_all_should_work() {
+        let dir = tempdir().unwrap();
+        let store = SledDb::new(dir);
+        test_get_all(store);
+    }
+
+    #[test]
+    fn sleddb_iter_should_work() {
+        let dir = tempdir().unwrap();
+        let store = SledDb::new(dir);
+        test_get_iter(store);
+    }
 
     #[test]
     fn rocksdb_basic_interface_should_work() {
@@ -99,12 +99,12 @@ mod tests {
         test_basic_interface(store);
     }
 
-    // #[test]
-    // fn rocksdb_get_all_should_work() {
-    //     let dir = tempdir().unwrap();
-    //     let store = RocksDB::new(dir);
-    //     test_get_all(store);
-    // }
+    #[test]
+    fn rocksdb_get_all_should_work() {
+        let dir = tempdir().unwrap();
+        let store = RocksDB::new(dir);
+        test_get_all(store);
+    }
 
     fn test_basic_interface(store: impl Storage) {
         // Call set() first time will create table {{t1}}, insert the key and return None since there is no value before.
@@ -141,6 +141,7 @@ mod tests {
     fn test_get_all(store: impl Storage) {
         store.set("t2", "k1".into(), "v1".into()).unwrap();
         store.set("t2", "k2".into(), "v2".into()).unwrap();
+        store.set("t1", "k3".into(), "v3".into()).unwrap();
         let mut data = store.get_all("t2").unwrap();
         data.sort_by(|a, b| a.partial_cmp(b).unwrap());
         assert_eq!(

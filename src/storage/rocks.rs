@@ -1,7 +1,7 @@
 // implementation of using rocksdb
 
 use crate::{flip, KvError, Kvpair, Storage, Value};
-use rocksdb::{Error, DB, ReadOptions, IteratorMode, Direction};
+use rocksdb::{Direction, Error, IteratorMode, ReadOptions, DB};
 use std::{convert::TryInto, path::Path, str};
 
 #[derive(Debug)]
@@ -19,6 +19,14 @@ impl RocksDB {
     fn get_table_prefix(table: &str) -> String {
         format!("{}:", table)
     }
+
+    fn get_key_only(full_key: Box<[u8]>, table: &str) -> String {
+        let key = &*full_key;
+        let key = str::from_utf8(key).unwrap();
+        let start_index = key.find(table).unwrap();
+        let end_index = table.len();
+        key[start_index + end_index..].to_string()
+    }
 }
 
 impl Storage for RocksDB {
@@ -35,15 +43,12 @@ impl Storage for RocksDB {
         let name = RocksDB::get_full_key(table, &key);
         let data: Vec<u8> = value.try_into()?;
         let previous_value: Option<Value> = match self.0.get(&name.as_bytes())? {
-            Some(value) => {
-                Some(value.as_slice().try_into()?)
-            },
-            None => None
+            Some(value) => Some(value.as_slice().try_into()?),
+            None => None,
         };
         self.0.put(&name.as_bytes(), data)?;
-        // let result: Value = self.0.get(&name.as_bytes())?.map(|v| v.as_slice().try_into()).unwrap()?;
         Ok(previous_value)
-        // last value 为之前的值，不是当前值。
+        // last value is the one before put, not the one currently putting
     }
 
     fn contains(&self, table: &str, key: &str) -> Result<bool, KvError> {
@@ -68,10 +73,15 @@ impl Storage for RocksDB {
         let mut get_options = ReadOptions::default();
         get_options.set_prefix_same_as_start(true);
 
-        let iter= self.0.iterator_opt(IteratorMode::From(&prefix.as_bytes(), Direction::Forward), get_options);
+        let iter = self.0.iterator_opt(
+            IteratorMode::From(&prefix.as_bytes(), Direction::Forward),
+            get_options,
+        );
+
         let mut result: Vec<Kvpair> = Vec::new();
         for item in iter {
-            result.push(item.unwrap().into())
+            let (key, value) = item.unwrap();
+            result.push((RocksDB::get_key_only(key, &prefix), value).into());
         }
         Ok(result)
     }
@@ -81,8 +91,19 @@ impl Storage for RocksDB {
     }
 }
 
-impl From<(Box<[u8]>, Box<[u8]>)> for Kvpair {
-    fn from(value: (Box<[u8]>, Box<[u8]>)) -> Self {
-        Self::new(str::from_utf8(&*value.0).unwrap(), str::from_utf8(&*value.1).unwrap().into())
+impl<T> From<(T, Box<[u8]>)> for Kvpair
+where
+    T: Into<String>,
+{
+    fn from(value: (T, Box<[u8]>)) -> Self {
+        let (key, value) = (value.0, value.1);
+        Kvpair::new(key, (&*value).try_into().unwrap())
     }
 }
+
+// impl From<(Box<[u8]>, Box<[u8]>)> for Kvpair {
+//     fn from(value: (Box<[u8]>, Box<[u8]>)) -> Self {
+//         let (key, value) = (&*value.0, &*value.1);
+//         Kvpair::new(str::from_utf8(key).unwrap(), value.try_into().unwrap())
+//     }
+// }

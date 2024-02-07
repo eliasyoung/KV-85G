@@ -106,6 +106,13 @@ mod tests {
         test_get_all(store);
     }
 
+    #[test]
+    fn rocksdb_iter_should_work() {
+        let dir = tempdir().unwrap();
+        let store = RocksDB::new(dir);
+        test_get_iter(store);
+    }
+
     fn test_basic_interface(store: impl Storage) {
         // Call set() first time will create table {{t1}}, insert the key and return None since there is no value before.
         // set() will return previous value of the key.

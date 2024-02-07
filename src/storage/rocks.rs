@@ -1,7 +1,7 @@
 // implementation of using rocksdb
 
-use crate::{flip, KvError, Kvpair, Storage, Value};
-use rocksdb::{Direction, Error, IteratorMode, ReadOptions, DB};
+use crate::{flip, KvError, Kvpair, Storage, StorageIter, Value};
+use rocksdb::{Direction, IteratorMode, ReadOptions, DB};
 use std::{convert::TryInto, path::Path, str};
 
 #[derive(Debug)]
@@ -73,21 +73,17 @@ impl Storage for RocksDB {
         let mut get_options = ReadOptions::default();
         get_options.set_prefix_same_as_start(true);
 
-        let iter = self.0.iterator_opt(
-            IteratorMode::From(&prefix.as_bytes(), Direction::Forward),
-            get_options,
-        );
-
-        let mut result: Vec<Kvpair> = Vec::new();
-        for item in iter {
-            let (key, value) = item.unwrap();
-            result.push((RocksDB::get_key_only(key, &prefix), value).into());
-        }
+        let result = rocks_scan_prefix(&self, &prefix, get_options)?;
         Ok(result)
     }
 
     fn get_iter(&self, table: &str) -> Result<Box<dyn Iterator<Item = Kvpair>>, KvError> {
-        todo!()
+        let prefix = RocksDB::get_table_prefix(table);
+        let mut get_options = ReadOptions::default();
+        get_options.set_prefix_same_as_start(true);
+
+        let result = StorageIter::new(rocks_scan_prefix(&self, &prefix, get_options)?.into_iter());
+        Ok(Box::new(result))
     }
 }
 
@@ -101,6 +97,25 @@ where
     }
 }
 
+fn rocks_scan_prefix(
+    db: &RocksDB,
+    prefix: &str,
+    read_options: ReadOptions,
+) -> Result<Vec<Kvpair>, KvError> {
+    let db_iter = db.0.iterator_opt(
+        IteratorMode::From(prefix.as_bytes(), Direction::Forward),
+        read_options,
+    );
+
+    let mut vec: Vec<Kvpair> = Vec::new();
+
+    for item in db_iter {
+        let (key, value) = item.unwrap();
+        vec.push((RocksDB::get_key_only(key, &prefix), value).into());
+    }
+
+    Ok(vec)
+}
 // impl From<(Box<[u8]>, Box<[u8]>)> for Kvpair {
 //     fn from(value: (Box<[u8]>, Box<[u8]>)) -> Self {
 //         let (key, value) = (&*value.0, &*value.1);

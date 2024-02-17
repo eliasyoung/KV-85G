@@ -94,3 +94,32 @@ fn decode_header(header: usize) -> (usize, bool) {
     let compressed = header & COMPRESSION_BIT == COMPRESSION_BIT;
     (len, compressed)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Value;
+    use bytes::Bytes;
+
+    #[test]
+    fn command_request_encode_decode_should_work() {
+        let mut buf = BytesMut::new();
+
+        let cmd = CommandRequest::new_hdel("t1", "k1");
+
+        cmd.encode_frame(&mut buf).unwrap();
+
+        assert_eq!(is_compressed(&buf), false);
+
+        let cmd1 = CommandRequest::decode_frame(&mut buf).unwrap();
+        assert_eq!(cmd, cmd1);
+    }
+
+    fn is_compressed(data: &[u8]) -> bool {
+        if let &[v] = &data[..1] {
+            v >> 7 == 1
+        } else {
+            false
+        }
+    }
+}

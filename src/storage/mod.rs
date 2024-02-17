@@ -120,29 +120,29 @@ mod tests {
         assert!(v.unwrap().is_none());
         // Call set() again with same table and key will update the value of the key and return previous value.
         let v1 = store.set("t1", "hello".into(), "world1".into());
-        assert_eq!(v1, Ok(Some("world".into())));
+        assert_eq!(v1.unwrap(), Some("world".into()));
 
         // Call get() for existed key will return the latest value of the key.
         let v = store.get("t1", "hello");
-        assert_eq!(v, Ok(Some("world1".into())));
+        assert_eq!(v.unwrap(), Some("world1".into()));
 
         // Call get() for key/table not exist will return None.
-        assert_eq!(Ok(None), store.get("t2", "hello"));
-        assert_eq!(Ok(None), store.get("t1", "hello1"));
+        assert_eq!(None, store.get("t2", "hello").unwrap());
+        assert_eq!(None, store.get("t1", "hello1").unwrap());
         assert!(store.get("t1", "hello1").unwrap().is_none());
 
         // Call contains() for key existed will return true, else will return false
-        assert_eq!(store.contains("t1", "hello"), Ok(true));
-        assert_eq!(store.contains("t1", "hello1"), Ok(false));
-        assert_eq!(store.contains("t2", "hello"), Ok(false));
+        assert_eq!(store.contains("t1", "hello").unwrap(), true);
+        assert_eq!(store.contains("t1", "hello1").unwrap(), false);
+        assert_eq!(store.contains("t2", "hello").unwrap(), false);
 
         // Call del() to delete a existed key will return the deleted value.
         let v = store.del("t1", "hello");
-        assert_eq!(v, Ok(Some("world1".into())));
+        assert_eq!(v.unwrap(), Some("world1".into()));
 
         // Call del() to delete a non-existed key/table will return None
-        assert_eq!(Ok(None), store.del("t1", "hello1"));
-        assert_eq!(Ok(None), store.del("t2", "hello"));
+        assert_eq!(None, store.del("t1", "hello1").unwrap());
+        assert_eq!(None, store.del("t2", "hello").unwrap());
     }
 
     fn test_get_all(store: impl Storage) {

@@ -2,6 +2,7 @@ pub mod abi;
 
 use crate::KvError;
 use abi::{command_request::RequestData, *};
+use bytes::Bytes;
 use http::StatusCode;
 use prost::Message;
 
@@ -21,7 +22,7 @@ impl CommandRequest {
             request_data: Some(RequestData::Hmset(Hmset {
                 table: table.into(),
                 pairs,
-            }))
+            })),
         }
     }
 
@@ -47,7 +48,7 @@ impl CommandRequest {
             request_data: Some(RequestData::Hmget(Hmget {
                 table: table.into(),
                 keys,
-            }))
+            })),
         }
     }
 
@@ -56,7 +57,7 @@ impl CommandRequest {
             request_data: Some(RequestData::Hdel(Hdel {
                 table: table.into(),
                 key: key.into(),
-            }))
+            })),
         }
     }
 
@@ -65,7 +66,7 @@ impl CommandRequest {
             request_data: Some(RequestData::Hmdel(Hmdel {
                 table: table.into(),
                 keys,
-            }))
+            })),
         }
     }
 
@@ -74,7 +75,7 @@ impl CommandRequest {
             request_data: Some(RequestData::Hexist(Hexist {
                 table: table.into(),
                 key: key.into(),
-            }))
+            })),
         }
     }
 
@@ -82,8 +83,8 @@ impl CommandRequest {
         Self {
             request_data: Some(RequestData::Hmexist(Hmexist {
                 table: table.into(),
-                keys
-            }))
+                keys,
+            })),
         }
     }
 }
@@ -124,12 +125,25 @@ impl From<i64> for Value {
     }
 }
 
-
 impl TryFrom<&[u8]> for Value {
     type Error = KvError;
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         let msg = Value::decode(value)?;
         Ok(msg)
+    }
+}
+
+impl<const N: usize> From<&[u8; N]> for Value {
+    fn from(buf: &[u8; N]) -> Self {
+        Bytes::copy_from_slice(&buf[..]).into()
+    }
+}
+
+impl From<Bytes> for Value {
+    fn from(buf: Bytes) -> Self {
+        Self {
+            value: Some(value::Value::Binary(buf)),
+        }
     }
 }
 
@@ -149,6 +163,16 @@ impl From<Value> for CommandResponse {
         Self {
             status: StatusCode::OK.as_u16() as _,
             values: vec![value],
+            ..Default::default()
+        }
+    }
+}
+
+impl From<Vec<Value>> for CommandResponse {
+    fn from(values: Vec<Value>) -> Self {
+        Self {
+            status: StatusCode::OK.as_u16() as _,
+            values,
             ..Default::default()
         }
     }

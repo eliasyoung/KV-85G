@@ -22,8 +22,14 @@ pub enum KvError {
     #[error("Failed to access rocksdb")]
     RocksDBError(#[from] rocksdb::Error),
 
+    #[error("Failed to parse certifcate: {0}, {1}")]
+    CertifcateParseError(&'static str, &'static str),
+
     #[error("Frame is larger than max size!")]
     FrameError,
+
+    #[error("TLS Error")]
+    TLSError(#[from] tokio_rustls::rustls::TLSError),
 
     #[error("I/O Error")]
     IoError(#[from] std::io::Error),

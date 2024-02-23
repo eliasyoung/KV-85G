@@ -4,8 +4,10 @@ use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt};
 use tracing::info;
 
 mod frame;
+mod tls;
 
 pub use frame::{read_frame, FrameCoder};
+pub use tls::*;
 
 pub struct ProstServerStream<S> {
     inner: S,

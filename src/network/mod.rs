@@ -5,6 +5,7 @@ use tracing::info;
 
 mod frame;
 mod tls;
+mod stream;
 
 pub use frame::{read_frame, FrameCoder};
 pub use tls::*;

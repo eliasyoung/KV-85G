@@ -1,5 +1,5 @@
-use bytes::{ BytesMut};
-use futures::{Sink, Stream};
+use bytes::BytesMut;
+use futures::{ready, Sink, Stream, FutureExt};
 use std::{
     marker::PhantomData,
     pin::Pin,
@@ -7,7 +7,7 @@ use std::{
 };
 use tokio::io::{AsyncRead, AsyncWrite};
 
-use crate::{FrameCoder, KvError};
+use crate::{read_frame, FrameCoder, KvError};
 
 // handle stream of KV server prost frame
 pub struct ProstStream<S, In, Out> {
@@ -17,7 +17,6 @@ pub struct ProstStream<S, In, Out> {
 
     _in: PhantomData<In>,
     _out: PhantomData<Out>,
-
 }
 
 impl<S, In, Out> Stream for ProstStream<S, In, Out>
@@ -28,8 +27,17 @@ where
 {
     type Item = Result<In, KvError>;
 
-    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        todo!()
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        assert!(self.rbuf.len() == 0);
+
+        let mut rest = self.rbuf.split_off(0);
+
+        let fut = read_frame(&mut self.stream, &mut rest);
+        ready!(Box::pin(fut).poll_unpin(cx))?;
+
+        self.rbuf.unsplit(rest);
+
+        Poll::Ready(Some(In::decode_frame(&mut self.rbuf)))
     }
 }
 
